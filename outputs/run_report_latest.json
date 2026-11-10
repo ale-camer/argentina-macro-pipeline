@@ -1,0 +1,184 @@
+{
+  "run_timestamp_utc": "2026-11-10T22:49:13.115280+00:00",
+  "status": "OK_DETERMINISTIC",
+  "sources_summary": [
+    {
+      "source_id": "wb_inflation",
+      "previous_last_period": "2025",
+      "current_last_period": "2025",
+      "row_count": 65,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "wb_gdp_growth",
+      "previous_last_period": "2025",
+      "current_last_period": "2025",
+      "row_count": 65,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "gasto_publico",
+      "previous_last_period": "2024",
+      "current_last_period": "2024",
+      "row_count": 45,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "sipa_modalidades",
+      "previous_last_period": "2026-07-01",
+      "current_last_period": "2026-07-01",
+      "row_count": 175,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "sipa_provincias",
+      "previous_last_period": "2026-07-01",
+      "current_last_period": "2026-07-01",
+      "row_count": 211,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "indec_salarios_vigente",
+      "previous_last_period": "2026-08-01",
+      "current_last_period": "2026-08-01",
+      "row_count": 131,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "indec_salarios_historico",
+      "previous_last_period": "2015-10-01",
+      "current_last_period": "2015-10-01",
+      "row_count": 169,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    },
+    {
+      "source_id": "indec_emae",
+      "previous_last_period": "2026-08-01",
+      "current_last_period": "2026-08-01",
+      "row_count": 272,
+      "new_observations_added": 0,
+      "golden_test_passed": true,
+      "ingestion_mode": "deterministic",
+      "notes": null
+    }
+  ],
+  "visual_qa_summary": "5/5 PASS",
+  "visual_qa_report": {
+    "visual_qa_passed": true,
+    "mode_used": "deterministic_fallback",
+    "figures_checked": 5,
+    "figures_passed": 5,
+    "issues": [],
+    "details": [
+      {
+        "figure_id": "visual_1",
+        "png_path": "outputs/figures/macro_improved_2026_1.png",
+        "exists": true,
+        "width_px": 1877,
+        "height_px": 1355,
+        "file_size_bytes": 297996,
+        "passed": true,
+        "issues": []
+      },
+      {
+        "figure_id": "visual_2",
+        "png_path": "outputs/figures/macro_improved_2026_2.png",
+        "exists": true,
+        "width_px": 1876,
+        "height_px": 1053,
+        "file_size_bytes": 385959,
+        "passed": true,
+        "issues": []
+      },
+      {
+        "figure_id": "visual_3",
+        "png_path": "outputs/figures/macro_improved_2026_3.png",
+        "exists": true,
+        "width_px": 1802,
+        "height_px": 1002,
+        "file_size_bytes": 282743,
+        "passed": true,
+        "issues": []
+      },
+      {
+        "figure_id": "visual_4",
+        "png_path": "outputs/figures/macro_improved_2026_4_table.png",
+        "exists": true,
+        "width_px": 2026,
+        "height_px": 823,
+        "file_size_bytes": 135470,
+        "passed": true,
+        "issues": []
+      },
+      {
+        "figure_id": "visual_5",
+        "png_path": "outputs/figures/macro_improved_2026_4.png",
+        "exists": true,
+        "width_px": 1791,
+        "height_px": 1324,
+        "file_size_bytes": 247831,
+        "passed": true,
+        "issues": []
+      }
+    ]
+  },
+  "structural_breaks": {
+    "regime_shift_detected": false,
+    "evaluated_up_to_date": "2026-07-01",
+    "pelt_emae_breaks": [
+      "2010-04-01",
+      "2011-07-01",
+      "2018-08-01",
+      "2021-12-01",
+      "2024-11-01"
+    ],
+    "pelt_jobs_breaks": [
+      "2010-09-01",
+      "2011-12-01",
+      "2014-11-01",
+      "2019-01-01",
+      "2020-04-01",
+      "2021-12-01"
+    ],
+    "latest_24m_emae_cagr_pct": 1.8,
+    "latest_24m_jobs_cagr_pct": -1.4,
+    "latest_pub_exp_gdp_pct": 35.57,
+    "spending_below_critical_40pct": true,
+    "trigger_reasons": []
+  },
+  "regime_pr_proposal": {
+    "pr_opened": false,
+    "pr_title": null,
+    "pr_markdown_path": null,
+    "proposed_regime_yaml_snippet": null
+  },
+  "outputs_generated": {
+    "macro_contract_json": "outputs/macro_argentina_latest.json",
+    "run_report_json": "outputs/run_report_latest.json",
+    "figures_dir": "outputs/figures"
+  },
+  "notifications_sent": [
+    "local_json_report"
+  ]
+}

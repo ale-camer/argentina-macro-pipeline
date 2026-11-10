@@ -1,0 +1,82 @@
+version: "1.0.0"
+description: "Active macroeconomic regime definitions and statistical thresholds for structural break detection."
+
+macro_regimes:
+  - id: "hiperinflacion_1980_1990"
+    name: "1980–1990: Hiperinflación"
+    start_year: 1980
+    end_year: 1991
+    x0: 1980.0
+    x1: 1991.0
+    bg_color: "#fee2e2"
+    text_color: "#7f1d1d"
+    border_color: "#fca5a5"
+    card_x: 1985.2
+    card_y: 250.0
+    label: "1980–1990: Hiperinflación\n• CAGR PBI: -1.15%/año\n• Gasto: 29.6% | Infl. med.: 316%"
+
+  - id: "expansion_1991_2011"
+    name: "1991–2011: Expansión"
+    start_year: 1991
+    end_year: 2011
+    x0: 1991.0
+    x1: 2011.0
+    bg_color: "#dcfce7"
+    text_color: "#14532d"
+    border_color: "#86efac"
+    card_x: 2000.5
+    card_y: 250.0
+    label: "1991–2011: Expansión\n• CAGR PBI: +3.76%/año\n• Gasto: 31.3% | Infl. med.: 10.6%"
+
+  - id: "estanflacion_2011_2023"
+    name: "2011–2023: Estanflación"
+    start_year: 2011
+    end_year: 2023
+    x0: 2011.0
+    x1: 2023.5
+    bg_color: "#fef3c7"
+    text_color: "#78350f"
+    border_color: "#fde68a"
+    card_x: 2014.2
+    card_y: 250.0
+    label: "2011–2023: Estanflación\n• CAGR PBI: -0.08%/año\n• Gasto: 44.1% | Infl. med.: 41.1%"
+
+  - id: "ajuste_fiscal_2024_presente"
+    name: "2024–2025: Ajuste Fiscal"
+    start_year: 2023
+    end_year: 2025
+    x0: 2023.5
+    x1: 2025.5
+    bg_color: "#e0f2fe"
+    text_color: "#0c4a6e"
+    border_color: "#7dd3fc"
+    card_x: 2023.2
+    card_y: 250.0
+    label: "2024–2025: Ajuste Fiscal\n• Gasto: 41.6% → 35.6%\n• Infl.: 208%→39% | PBI +4.4%"
+    expected_direction:
+      pub_exp_max_threshold: 40.0
+      emae_24m_slope_sign: "positive_or_neutral"
+
+employment_regimes:
+  - id: "expansion_empleo_2009_2011"
+    name: "2009–2011 (Expansión)"
+    start_date: "2009-01-01"
+    end_date: "2011-12-31"
+    bg_color: "#dcfce7"
+    scatter_color: "#16a34a"
+
+  - id: "estancamiento_empleo_2012_presente"
+    name: "2012–Presente (Estancamiento Estructural)"
+    start_date: "2012-01-01"
+    end_date: null
+    bg_color: "#fef3c7"
+    scatter_color: "#d97706"
+
+structural_break_rules:
+  pelt_model: "rbf"
+  pelt_min_size: 12
+  pelt_penalty: 5.0
+  post_2024_window_months: 24
+  sustained_slope_threshold_pct_per_year: 2.5
+  critical_spending_gdp_threshold: 40.0
+  trigger_regime_shift_after_date: "2026-12-01"

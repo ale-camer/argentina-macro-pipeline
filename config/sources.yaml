@@ -1,0 +1,140 @@
+version: "1.0.0"
+description: "Configuration for the 7 official sources, auto-discovery landing pages, and parser offsets."
+
+sources:
+  wb_inflation:
+    id: "wb_inflation"
+    name: "Annual Inflation (GDP Deflator, 1961–Present)"
+    provider: "World Bank"
+    collector: "world_bank"
+    direct_url: "https://api.worldbank.org/v2/en/indicator/NY.GDP.DEFL.KD.ZG?downloadformat=csv"
+    api_json_url: "https://api.worldbank.org/v2/country/ARG/indicator/NY.GDP.DEFL.KD.ZG?format=json&per_page=200"
+    local_raw_filename: "wb_inflacion.zip"
+    snapshot_filename: "wb_inflation.csv"
+    parser_config:
+      country_code: "ARG"
+      indicator_code: "NY.GDP.DEFL.KD.ZG"
+      skiprows: 4
+      value_col_name: "inflation"
+
+  wb_gdp_growth:
+    id: "wb_gdp_growth"
+    name: "Annual Real GDP Growth (1961–Present)"
+    provider: "World Bank"
+    collector: "world_bank"
+    direct_url: "https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv"
+    api_json_url: "https://api.worldbank.org/v2/country/ARG/indicator/NY.GDP.MKTP.KD.ZG?format=json&per_page=200"
+    local_raw_filename: "wb_pbi_growth.zip"
+    snapshot_filename: "wb_gdp_growth.csv"
+    parser_config:
+      country_code: "ARG"
+      indicator_code: "NY.GDP.MKTP.KD.ZG"
+      skiprows: 4
+      value_col_name: "gdpGrowth"
+
+  gasto_publico:
+    id: "gasto_publico"
+    name: "Consolidated Public Spending as % of GDP (1980–Present)"
+    provider: "Ministry of Economy"
+    collector: "ministerio_economia"
+    landing_page_url: "https://www.argentina.gob.ar/economia/politicaeconomica/macroeconomica/gastopublicoconsolidado"
+    discovery_regex: 'https?://[^"''\s>]*gasto_publico_consolidado[^"''\s>]*\.xlsx?'
+    direct_url: "https://www.argentina.gob.ar/sites/default/files/gasto_publico_consolidado_desde_1980_2.xls"
+    local_raw_filename: "gasto_publico.xls"
+    snapshot_filename: "gasto_publico.csv"
+    parser_config:
+      sheet_name: "% del PIB"
+      years_row_idx: 2
+      values_row_idx: 4
+      start_col_idx: 2
+      value_col_name: "pubExpToGDP"
+
+  sipa_trabajo_registrado:
+    id: "sipa_trabajo_registrado"
+    name: "SIPA Registered Employment (Modalities 2012–Present and Provinces 2009–Present)"
+    provider: "Ministry of Human Capital - Secretariat of Labor (SIPA)"
+    collector: "sipa_trabajo"
+    landing_page_url: "https://www.argentina.gob.ar/trabajo/estadisticas"
+    discovery_regex: 'https?://[^"''\s>]*trabajoregistrado_[0-9]{4}_estadisticas\.xlsx'
+    direct_url: "https://www.argentina.gob.ar/sites/default/files/trabajoregistrado_2607_estadisticas.xlsx"
+    local_raw_filename: "sipa_trabajo_registrado.xlsx"
+    snapshot_filenames:
+      sipa_modalidades: "sipa_modalidades.csv"
+      sipa_provincias: "sipa_provincias.csv"
+    parser_config:
+      modalidades:
+        sheet_name: "T.2.1"
+        row_offset: 1
+        start_date: "2012-01-01"
+        freq: "MS"
+        check_numeric_col: "Unnamed: 7"
+        col_mapping:
+          "Unnamed: 1": "Empleo privado"
+          "Unnamed: 2": "Empleo público"
+          "Unnamed: 3": "Empleo en casas particulares"
+          "Unnamed: 4": "Autónomos"
+          "Unnamed: 5": "Monotributo"
+          "Unnamed: 6": "Monotributo Social"
+          "Unnamed: 7": "Total"
+      provincias:
+        sheet_name: "A.5.1"
+        row_offset: 1
+        start_date: "2009-01-01"
+        freq: "MS"
+        check_numeric_col: "Unnamed: 1"
+        start_col_idx: 1
+
+  indec_salarios_vigente:
+    id: "indec_salarios_vigente"
+    name: "INDEC Wage Index — Current Series (10/2015–Present)"
+    provider: "INDEC"
+    collector: "indec"
+    landing_page_url: "https://www.indec.gob.ar/Nivel4/Tema/4/31/61"
+    discovery_regex: 'https?://[^"''\s>]*indice_salarios\.csv'
+    direct_url: "https://www.indec.gob.ar/ftp/cuadros/sociedad/indice_salarios.csv"
+    local_raw_filename: "indec_indice_salarios.csv"
+    snapshot_filename: "indec_salarios_vigente.csv"
+    parser_config:
+      sep: ";"
+      decimal: ","
+      encoding: "latin1"
+      start_date: "2015-10-01"
+      freq: "MS"
+      private_col: "IS_sector_privado_registrado"
+      public_col: "IS_sector_publico"
+
+  indec_salarios_historico:
+    id: "indec_salarios_historico"
+    name: "INDEC Wage Index — Spliced Historical Series (10/2001–10/2015)"
+    provider: "INDEC"
+    collector: "indec"
+    landing_page_url: "https://www.indec.gob.ar/Nivel4/Tema/4/31/61"
+    discovery_regex: 'https?://[^"''\s>]*serie_is_2012\.xls'
+    direct_url: "https://www.indec.gob.ar/ftp/cuadros/sociedad/serie_is_2012.xls"
+    local_raw_filename: "indec_salarios_hist_2012.xls"
+    snapshot_filename: "indec_salarios_historico.csv"
+    parser_config:
+      sheet_name: "Serie histórica IS"
+      row_offset: 6
+      start_date: "2001-10-01"
+      freq: "MS"
+      private_col: "Unnamed: 1"
+      public_col: "Unnamed: 3"
+
+  indec_emae:
+    id: "indec_emae"
+    name: "EMAE — Monthly Economic Activity Estimator Base 2004=100 (01/2004–Present)"
+    provider: "INDEC"
+    collector: "indec"
+    landing_page_url: "https://www.indec.gob.ar/Nivel4/Tema/3/9/48"
+    discovery_regex: 'https?://[^"''\s>]*sh_emae_mensual_base2004\.xls'
+    direct_url: "https://www.indec.gob.ar/ftp/cuadros/economia/sh_emae_mensual_base2004.xls"
+    local_raw_filename: "indec_emae.xls"
+    snapshot_filename: "indec_emae.csv"
+    parser_config:
+      row_offset: 4
+      start_date: "2004-01-01"
+      freq: "MS"
+      orig_col_idx: 2
+      des_col_idx: 4
+      tc_col_idx: 6

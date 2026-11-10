@@ -1,0 +1,49 @@
+# Python virtual environments & packaging
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.installed.cfg
+*.egg
+build/
+dist/
+
+# Test & tool caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local environment variables & secrets
+.env
+.env.*
+!.env.example
+
+# Internal ad-hoc documents & bootstrap scratch files (do not upload to GitHub)
+NOTAS_OPERATIVAS_INTERNAS.md
+PROMPT_INICIAL.md
+bootstrap/
+
+# OS & IDE temporary files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Raw binary cache (track only the SHA-256 manifest, ignore large raw binaries)
+data/raw_cache/*
+!data/raw_cache/manifest.json
+
+# Explicitly track verified snapshots and public output contracts for web consumption
+!data/last_known_good/
+!data/last_known_good/*.csv
+!outputs/
+!outputs/macro_argentina_latest.json
+!outputs/run_report_latest.json
+!outputs/figures/
+!outputs/figures/*

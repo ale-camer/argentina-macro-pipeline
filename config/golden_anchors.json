@@ -1,0 +1,113 @@
+{
+  "version": "1.0.0",
+  "description": "Immutable historical benchmarks (Golden Anchors) for deterministic validation of the 7 official sources.",
+  "default_tolerance": 0.01,
+  "sources": {
+    "wb_inflation": {
+      "description": "Annual Inflation (GDP Deflator, World Bank NY.GDP.DEFL.KD.ZG)",
+      "index_type": "year_int",
+      "min_year": 1961,
+      "required_columns": ["inflation"],
+      "anchors": [
+        {"period": 1961, "column": "inflation", "expected": 20.310698, "tolerance": 0.01},
+        {"period": 2017, "column": "inflation", "expected": 26.006379, "tolerance": 0.01},
+        {"period": 2020, "column": "inflation", "expected": 40.083088, "tolerance": 0.01}
+      ]
+    },
+    "wb_gdp_growth": {
+      "description": "Annual Real GDP Growth (World Bank NY.GDP.MKTP.KD.ZG)",
+      "index_type": "year_int",
+      "min_year": 1961,
+      "required_columns": ["gdpGrowth"],
+      "anchors": [
+        {"period": 1961, "column": "gdpGrowth", "expected": 5.427843, "tolerance": 0.01},
+        {"period": 2011, "column": "gdpGrowth", "expected": 6.003952, "tolerance": 0.01},
+        {"period": 2017, "column": "gdpGrowth", "expected": 2.818503, "tolerance": 0.01}
+      ]
+    },
+    "gasto_publico": {
+      "description": "Consolidated Public Spending as % of GDP (Ministry of Economy, 1980-Present)",
+      "index_type": "year_int",
+      "min_year": 1980,
+      "required_columns": ["pubExpToGDP"],
+      "anchors": [
+        {"period": 1980, "column": "pubExpToGDP", "expected": 29.037146, "tolerance": 0.01},
+        {"period": 2011, "column": "pubExpToGDP", "expected": 40.006699, "tolerance": 0.01}
+      ]
+    },
+    "sipa_modalidades": {
+      "description": "SIPA Registered Employment by Modality (Sheet T.2.1, thousands of workers, 01/2012-Present)",
+      "index_type": "datetime_ms",
+      "start_date": "2012-01-01",
+      "required_columns": [
+        "Empleo privado",
+        "Empleo público",
+        "Empleo en casas particulares",
+        "Autónomos",
+        "Monotributo",
+        "Monotributo Social",
+        "Total"
+      ],
+      "anchors": [
+        {"period": "2012-01-01", "column": "Empleo privado", "expected": 6106.0, "tolerance": 0.1},
+        {"period": "2012-01-01", "column": "Empleo público", "expected": 2543.7, "tolerance": 0.1},
+        {"period": "2012-01-01", "column": "Total", "expected": 10931.3, "tolerance": 0.1}
+      ],
+      "share_anchors": {
+        "period": "2012-01-01",
+        "shares_pct": {
+          "Empleo privado": 55.86,
+          "Empleo público": 23.27,
+          "Monotributo": 12.03,
+          "Autónomos": 3.75,
+          "Empleo en casas particulares": 3.56,
+          "Monotributo Social": 1.53
+        },
+        "tolerance": 0.02
+      }
+    },
+    "sipa_provincias": {
+      "description": "SIPA Consolidated Provincial Private Formal Employment (Sheet A.5.1, thousands, 01/2009-Present)",
+      "index_type": "datetime_ms",
+      "start_date": "2009-01-01",
+      "required_columns": ["total"],
+      "anchors": [
+        {"period": "2009-01-01", "column": "total", "expected": 5659.961, "tolerance": 0.01},
+        {"period": "2009-02-01", "column": "total", "expected": 5647.381, "tolerance": 0.01}
+      ]
+    },
+    "indec_salarios_vigente": {
+      "description": "INDEC Wage Index Current Series (Base Oct-2016=100, 10/2015-Present)",
+      "index_type": "datetime_ms",
+      "start_date": "2015-10-01",
+      "required_columns": ["sectorPrivado", "sectorPublico"],
+      "anchors": [
+        {"period": "2015-10-01", "column": "sectorPrivado", "expected": 73.97, "tolerance": 0.01},
+        {"period": "2015-10-01", "column": "sectorPublico", "expected": 75.24, "tolerance": 0.01},
+        {"period": "2016-10-01", "column": "sectorPrivado", "expected": 100.0, "tolerance": 0.01},
+        {"period": "2016-10-01", "column": "sectorPublico", "expected": 100.0, "tolerance": 0.01}
+      ]
+    },
+    "indec_salarios_historico": {
+      "description": "INDEC Historical Spliced Wage Index Series (10/2001-10/2015)",
+      "index_type": "datetime_ms",
+      "start_date": "2001-10-01",
+      "required_columns": ["sectorPrivado", "sectorPublico"],
+      "anchors": [
+        {"period": "2001-10-01", "column": "sectorPrivado", "expected": 14.22, "tolerance": 0.01},
+        {"period": "2001-10-01", "column": "sectorPublico", "expected": 27.99, "tolerance": 0.01}
+      ]
+    },
+    "indec_emae": {
+      "description": "EMAE - Monthly Economic Activity Estimator Base 2004=100 (01/2004-Present)",
+      "index_type": "datetime_ms",
+      "start_date": "2004-01-01",
+      "required_columns": ["gdp", "des", "tc"],
+      "anchors": [
+        {"period": "2004-01-01", "column": "gdp", "expected": 92.6275, "tolerance": 0.01},
+        {"period": "2004-01-01", "column": "des", "expected": 98.5292, "tolerance": 0.01},
+        {"period": "2004-01-01", "column": "tc", "expected": 96.0499, "tolerance": 0.01}
+      ]
+    }
+  }
+}

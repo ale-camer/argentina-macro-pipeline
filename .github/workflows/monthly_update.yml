@@ -1,0 +1,82 @@
+name: Monthly Argentina Macro Pipeline Update
+
+on:
+  schedule:
+    # Automated monthly run on the 25th of each month at 09:00 UTC
+    - cron: "0 9 25 * *"
+  workflow_dispatch:
+    inputs:
+      prefer_network:
+        description: "Download fresh data live from the 7 official sources (.gob.ar / World Bank)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  run-macro-pipeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run Golden Anchor & Transformer Unit Tests
+        run: |
+          pytest -v
+
+      - name: Execute Argentina Macro Pipeline
+        env:
+          PREFER_NETWORK: ${{ github.event.inputs.prefer_network || 'true' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+        run: |
+          python -m src.main
+
+      - name: Upload Generated Figures & JSON Contracts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: argentina-macro-outputs
+          path: |
+            outputs/macro_argentina_latest.json
+            outputs/run_report_latest.json
+            outputs/figures/*.png
+            outputs/figures/*.svg
+            outputs/regime_shift_pr_proposal.md
+
+      - name: Commit updated snapshots and outputs on main
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/raw_cache/manifest.json data/last_known_good/ outputs/macro_argentina_latest.json outputs/run_report_latest.json outputs/figures/
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(data): automated monthly macro series and figures update"
+            git push
+          fi
