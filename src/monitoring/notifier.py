@@ -72,6 +72,49 @@ def format_markdown_summary(report: PipelineRunReport) -> str:
     return "\n".join(lines)
 
 
+def format_whatsapp_summary(report: PipelineRunReport) -> str:
+    """Formats a compact, single-thread WhatsApp message prefixed with *[ARG-MACRO]* for CallMeBot."""
+    status_emoji = {
+        "OK_DETERMINISTIC": "✅",
+        "HEALED_BY_AGENT": "🛠️",
+        "REGIME_SHIFT_PR_OPENED": "🚨",
+        "FALLBACK_USED": "⚠️",
+        "FAILED": "❌",
+    }.get(report.status, "ℹ️")
+
+    passed_gt = sum(1 for r in report.sources_summary if r.golden_test_passed)
+    total_gt = len(report.sources_summary)
+    new_obs_total = sum(r.new_observations_added for r in report.sources_summary)
+
+    lines = [
+        f"🇦🇷 *[ARG-MACRO]* {status_emoji} *{report.status}*",
+        f"📅 {report.run_timestamp_utc[:10]} | Golden: {passed_gt}/{total_gt} PASS | QA: {report.visual_qa_summary} ({report.visual_qa_report.mode_used})",
+        f"📈 Nuevas obs: +{new_obs_total} | Quiebre régimen: {'SÍ' if report.structural_breaks.regime_shift_detected else 'NO'}",
+    ]
+    for r in report.sources_summary:
+        badge = "✓" if r.golden_test_passed else "✗"
+        delta = f" (+{r.new_observations_added})" if r.new_observations_added > 0 else ""
+        lines.append(f"• {badge} `{r.source_id}`: {r.current_last_period}{delta}")
+    return "\n".join(lines)
+
+
+def send_whatsapp_callmebot_alert(text: str) -> bool:
+    """Sends a WhatsApp message to the user's personal phone via CallMeBot API."""
+    phone = os.environ.get("WHATSAPP_PHONE")
+    apikey = os.environ.get("WHATSAPP_APIKEY")
+    if not phone or not apikey:
+        return False
+    try:
+        url = "https://api.callmebot.com/whatsapp.php"
+        params = {"phone": phone, "text": text, "apikey": apikey}
+        with httpx.Client(timeout=15.0) as client:
+            resp = client.get(url, params=params)
+            resp.raise_for_status()
+        return True
+    except Exception:
+        return False
+
+
 def send_telegram_alert(markdown_text: str) -> bool:
     token = os.environ.get("TELEGRAM_BOT_TOKEN")
     chat_id = os.environ.get("TELEGRAM_CHAT_ID")
@@ -132,6 +175,8 @@ def publish_run_report(
 
     if write_github_step_summary(md_summary):
         channels.append("github_step_summary")
+    if send_whatsapp_callmebot_alert(format_whatsapp_summary(report)):
+        channels.append("whatsapp_callmebot")
     if send_telegram_alert(md_summary):
         channels.append("telegram")
     if send_email_alert(f"[Argentina Macro Pipeline] Status: {report.status}", md_summary):

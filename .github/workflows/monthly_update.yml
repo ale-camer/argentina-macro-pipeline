@@ -62,6 +62,8 @@ jobs:
           GCS_LAKE_BUCKET: "gs://argentina-macro-lake-31037835126"
           BQ_DATASET: "macro_lake"
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          WHATSAPP_APIKEY: ${{ secrets.WHATSAPP_APIKEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}

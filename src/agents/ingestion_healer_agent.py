@@ -38,10 +38,10 @@ class SelfHealingIngestionAgent:
     def __init__(
         self,
         golden_config: Optional[GoldenConfig] = None,
-        model_name: str = "gemini-2.5-flash",
+        model_name: str = "gemini-3.8-flash",
     ) -> None:
         self.golden_config = golden_config or load_golden_config()
-        self.model_name = model_name
+        self.model_name = os.environ.get("GEMINI_MODEL", model_name)
         self.api_key = os.environ.get("GEMINI_API_KEY")
 
     def inspect_excel_head(self, raw_path: Union[str, Path], sheet_name: Optional[str] = None, max_rows: int = 25) -> str:

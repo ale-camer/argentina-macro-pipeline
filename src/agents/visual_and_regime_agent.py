@@ -59,8 +59,8 @@ def _read_png_dimensions(png_path: Path) -> tuple[int, int]:
 class VisualQAAndRegimeAgent:
     """Encapsulated agent for Visual QA of the 5 figures and PR drafting upon structural breaks."""
 
-    def __init__(self, model_name: str = "gemini-2.5-flash") -> None:
-        self.model_name = model_name
+    def __init__(self, model_name: str = "gemini-3.8-flash") -> None:
+        self.model_name = os.environ.get("GEMINI_MODEL", model_name)
         self.api_key = os.environ.get("GEMINI_API_KEY")
 
     def inspect_visuals(

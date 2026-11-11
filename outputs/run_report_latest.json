@@ -1,5 +1,5 @@
 {
-  "run_timestamp_utc": "2026-11-10T22:49:13.115280+00:00",
+  "run_timestamp_utc": "2026-11-11T09:35:18.396503+00:00",
   "status": "OK_DETERMINISTIC",
   "sources_summary": [
     {
@@ -86,7 +86,7 @@
   "visual_qa_summary": "5/5 PASS",
   "visual_qa_report": {
     "visual_qa_passed": true,
-    "mode_used": "deterministic_fallback",
+    "mode_used": "gemini_multimodal",
     "figures_checked": 5,
     "figures_passed": 5,
     "issues": [],
