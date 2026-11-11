@@ -1,10 +1,10 @@
 # `argentina-macro-pipeline`
 
-Deterministic data engineering, quantitative macroeconomic analysis, and publication-grade visualization engine for Argentina (`1961–Present`), designed to power the `#analisis` section of `personal_website`.
+Deterministic data engineering, quantitative macroeconomic analysis, and JSON contract engine for Argentina (`1961–Present`), designed to power the native interactive React charts in the `#analisis` section of `personal_website`.
 
 ## Core Architectural Principle
 
-> **"100% deterministic core; LLM/Agent usage strictly bounded and encapsulated to the two brittle edges of the workflow (self-healing ingestion upon official layout changes, and multimodal visual QA / regime-shift PR drafting upon statistically detected structural breaks), with mandatory always-on telemetry and alerts on every execution."**
+> **"100% deterministic core; LLM/Agent usage strictly bounded and encapsulated to the two brittle edges of the workflow (self-healing ingestion upon official layout changes, and regime-shift PR drafting upon statistically detected PELT structural breaks), with mandatory always-on telemetry and alerts on every execution."**
 
 ---
 
@@ -22,11 +22,10 @@ The pipeline runs automatically on the **25th of each month at 09:00 UTC** via G
    - **Seasonal Adjustment & Employment-Output Elasticity:** Monthly alignment between SIPA Private Formal Employment and EMAE (`Base Jan-2009 = 100`), showing correlation rising from `51.93%` (raw seasonal series) to `76.72%` (seasonally adjusted) and `82.30%` (trend-cycle).
    - **Deduplicated Wage Splicing (`2015-10-01`):** Continuous geometric chaining between the historical (`Base 2012`) and current (`Base Oct-2016=100`) INDEC wage series, deflated via the exact Fisher equation ($\frac{1 + w_t}{1 + \pi_t} - 1$) into `Base 2012 = 100`.
    - **Structural Breaks & Forecasting:** Deterministic change-point detection via `ruptures` (`PELT`) + 24-month rolling log-linear slopes (`structural_breaks.py`) and 6-month `SARIMAX` projections with 95% confidence intervals (`forecaster.py`).
-3. **Stage 3 — Collision-Free Visualizations & Agentic QA (`src/visualizers/charts.py`, `src/agents/visual_and_regime_agent.py`):**
-   - Generates all 5 figures in high resolution (`PNG` + `SVG`) under `outputs/figures/` using dynamically reserved upper header bands and external legends (`bbox_to_anchor`).
-   - **Agent 2 Boundary (`VisualQAAndRegimeAgent`):** Audits all 5 generated charts (`5/5 PASS`) and, **only** if `structural_breaks.py` flags `regime_shift_detected = True`, drafts a human-review Pull Request proposal in `outputs/regime_shift_pr_proposal.md`.
-4. **Stage 4 — Web Contract & Always-On Monitoring (`outputs/`, `src/monitoring/notifier.py`):**
-   - Exports `outputs/macro_argentina_latest.json` (`~26 KB`) and `outputs/run_report_latest.json`, dispatching alerts via WhatsApp (TextMeBot / CallMeBot), GitHub Step Summary, Telegram Bot API, and/or SMTP Email.
+3. **Stage 3 — Agentic Regime-Shift Evaluation (`src/agents/visual_and_regime_agent.py`):**
+   - **Agent 2 Boundary (`VisualQAAndRegimeAgent`):** Evaluates PELT structural break telemetry over the transformed series and, **only** if `structural_breaks.py` flags `regime_shift_detected = True`, drafts a human-review Pull Request proposal in `outputs/regime_shift_pr_proposal.md`.
+4. **Stage 4 — Web JSON Contract & Always-On Monitoring (`outputs/`, `src/monitoring/notifier.py`):**
+   - Exports `outputs/macro_argentina_latest.json` (`~25 KB`) for native interactive rendering in `personal_website` and `outputs/run_report_latest.json`, dispatching alerts via WhatsApp (TextMeBot / CallMeBot), GitHub Step Summary, Telegram Bot API, and/or SMTP Email.
 
 ---
 
@@ -46,23 +45,21 @@ argentina-macro-pipeline/
 │   └── raw_cache/                       # Downloaded raw files + SHA-256 manifest.json
 ├── src/
 │   ├── main.py                          # Main 4-stage monthly pipeline orchestrator
-│   ├── collectors/                      # 100% Deterministic: HTTP download + regex auto-discovery
+│   ├── collectors/                      # 100% Deterministic: HTTP download + regex auto-discovery + GCP Lake sync
 │   ├── validators/                      # 100% Deterministic: Pydantic schemas + Golden Anchor checks
 │   ├── transformers/                    # 100% Deterministic: geometric compounding, splicing, elasticities
 │   ├── models/                          # 100% Deterministic: PELT structural breaks + SARIMAX forecaster
-│   ├── visualizers/                     # 100% Deterministic: 5 zero-overlap figures (PNG + SVG)
-│   ├── agents/                          # Strictly encapsulated agentic layer (with deterministic fallback)
+│   ├── agents/                          # Strictly encapsulated agentic layer (self-healing + PELT regime PR)
 │   └── monitoring/                      # Structured telemetry and Always-On alerts (WhatsApp / Telegram / SMTP / GitHub)
 ├── outputs/
-│   ├── macro_argentina_latest.json      # Compact JSON contract (~26 KB) ready for personal_website
-│   ├── run_report_latest.json           # Latest execution telemetry (per-source status, Golden Tests, QA)
-│   └── figures/                         # 5 publication-grade charts in high-res PNG and vector SVG
+│   ├── macro_argentina_latest.json      # Compact JSON contract (~25 KB) consumed natively by personal_website
+│   └── run_report_latest.json           # Latest execution telemetry (per-source status, Golden Tests, PELT breaks)
 ├── tests/
 │   ├── test_golden_anchors.py           # Verifies parsers reproduce historical benchmarks to 0.01 precision
 │   └── test_transformers.py             # Unit tests for geometric compounding, wage splicing, and elasticity
 └── .github/
     └── workflows/
-        └── monthly_update.yml           # Monthly cron (25th) + automated snapshot & output commits
+        └── monthly_update.yml           # Monthly cron (25th) + automated snapshot & JSON contract commits
 ```
 
 ---
@@ -88,11 +85,11 @@ PREFER_NETWORK=true .venv/bin/python3 -m src.main --network
 
 ## 4. Direct Consumption from `personal_website` (CORS-Free via GitHub Raw)
 
-Because `.github/workflows/monthly_update.yml` commits updated `outputs/macro_argentina_latest.json` and `outputs/figures/*` directly to the `main` branch, the React frontend in `personal_website` can fetch both the JSON data contract and vector figures directly from `raw.githubusercontent.com` (which provides native `Access-Control-Allow-Origin: *` headers and global CDN caching):
+Because `.github/workflows/monthly_update.yml` commits updated `outputs/macro_argentina_latest.json` directly to the `main` branch, the React frontend in `personal_website` fetches the JSON data contract directly from `raw.githubusercontent.com` (which provides native `Access-Control-Allow-Origin: *` headers and global CDN caching) to render all 5 interactive charts natively:
 
 ### Production Static Endpoints
 
-- **Macro Data & Metrics JSON Contract (`~26 KB`):**
+- **Macro Data & Metrics JSON Contract (`~25 KB`):**
   ```text
   https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/macro_argentina_latest.json
   ```
@@ -100,38 +97,20 @@ Because `.github/workflows/monthly_update.yml` commits updated `outputs/macro_ar
   ```text
   https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/run_report_latest.json
   ```
-- **High-Resolution Figures (`SVG` vector recommended for web / `PNG`):**
-  - Visual 1 (GDP, Public Spending & Inflation 1980–Present): `https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/figures/macro_improved_2026_1.svg`
-  - Visual 2 (Private Formal Jobs vs. EMAE & Elasticity): `https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/figures/macro_improved_2026_2.svg`
-  - Visual 3 (Cumulative Geometric Growth by SIPA Modality): `https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/figures/macro_improved_2026_3.svg`
-  - Visual 4 (Modality Share & Net Structural Shift `pp`): `https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/figures/macro_improved_2026_4_table.svg`
-  - Visual 5 (Real Private Wages vs. Real GDP Base 2012=100): `https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/figures/macro_improved_2026_4.svg`
 
 ### React Integration Snippet (`personal_website`)
 
 ```tsx
-const PIPELINE_BASE_URL =
-  "https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs";
+const PIPELINE_CONTRACT_URL =
+  "https://raw.githubusercontent.com/ale-camer/argentina-macro-pipeline/main/outputs/macro_argentina_latest.json";
 
 export async function fetchMacroArgentinaData() {
-  const res = await fetch(`${PIPELINE_BASE_URL}/macro_argentina_latest.json`, {
+  const res = await fetch(PIPELINE_CONTRACT_URL, {
     cache: "no-cache",
   });
   if (!res.ok) {
     throw new Error(`Failed to load macro contract: ${res.status}`);
   }
-  const data = await res.json();
-  return {
-    ...data,
-    figureUrls: Object.fromEntries(
-      Object.entries(data.figures).map(([key, files]: [string, any]) => [
-        key,
-        {
-          svg: `${PIPELINE_BASE_URL}/figures/${files.svg}`,
-          png: `${PIPELINE_BASE_URL}/figures/${files.png}`,
-        },
-      ])
-    ),
-  };
+  return await res.json();
 }
 ```

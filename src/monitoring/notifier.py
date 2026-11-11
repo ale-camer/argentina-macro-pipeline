@@ -19,7 +19,7 @@ from typing import Dict, List, Literal, Optional, Union
 import httpx
 from pydantic import BaseModel, Field
 
-from src.agents.visual_and_regime_agent import RegimePRProposal, VisualQAReport
+from src.agents.visual_and_regime_agent import RegimePRProposal
 from src.models.structural_breaks import StructuralBreakReport
 
 logger = logging.getLogger(__name__)
@@ -50,8 +50,6 @@ class PipelineRunReport(BaseModel):
     duration_sec: float = 0.0
     status: PipelineStatus
     sources_summary: List[SourceTelemetryRow] = Field(default_factory=list)
-    visual_qa_summary: str
-    visual_qa_report: VisualQAReport
     structural_breaks: StructuralBreakReport
     regime_pr_proposal: RegimePRProposal
     outputs_generated: Dict[str, str] = Field(default_factory=dict)
@@ -68,12 +66,11 @@ def _detect_trigger_label() -> str:
 
 
 def format_markdown_summary(report: PipelineRunReport) -> str:
-    """Formats a Markdown summary table covering all sources, Golden Tests, and Visual QA."""
+    """Formats a Markdown summary table covering all sources, Golden Tests, and PELT structural breaks."""
     lines = [
         f"## Argentina Macro Pipeline — Run Report (`{report.status}`)",
         f"- **Timestamp (UTC):** `{report.run_timestamp_utc}` (`{report.duration_sec:.1f}s`)",
-        f"- **Visual QA:** `{report.visual_qa_summary}` (`{report.visual_qa_report.mode_used}`)",
-        f"- **Regime Shift Detected:** `{report.structural_breaks.regime_shift_detected}`",
+        f"- **Regime Shift Detected (PELT):** `{report.structural_breaks.regime_shift_detected}` (`{report.regime_pr_proposal.mode_used}`)",
         "",
         "| Source | Previous Cutoff | Current Cutoff | Rows | New Obs. | Golden Test | Ingestion Mode |",
         "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |",
@@ -105,7 +102,7 @@ def format_whatsapp_summary(report: PipelineRunReport) -> str:
     sources_total = len(report.sources_summary)
     total_rows = sum(r.row_count for r in report.sources_summary)
     delta_rows = sum(r.new_observations_added for r in report.sources_summary)
-    fig_qa = f"{report.visual_qa_report.figures_passed}/{report.visual_qa_report.figures_checked}"
+    quiebre_str = "SÍ" if report.structural_breaks.regime_shift_detected else "NO"
 
     years = [
         int(r.current_last_period[:4])
@@ -116,18 +113,17 @@ def format_whatsapp_summary(report: PipelineRunReport) -> str:
     year_range = f"1961–{max_year}"
 
     contract_path = Path(report.outputs_generated.get("macro_contract_json", "outputs/macro_argentina_latest.json"))
-    contract_kb = (contract_path.stat().st_size / 1024.0) if contract_path.exists() else 26.0
+    contract_kb = (contract_path.stat().st_size / 1024.0) if contract_path.exists() else 25.0
 
     success = report.status in ("OK_DETERMINISTIC", "HEALED_BY_AGENT", "REGIME_SHIFT_PR_OPENED")
     if success:
         sign = "+" if delta_rows >= 0 else ""
-        quiebre_str = "SÍ" if report.structural_breaks.regime_shift_detected else "NO"
         return (
             "🟢 *[ARG-MACRO]* · Ingesta Mensual OK\n"
             f"_{ts_utc} · {report.duration_sec:.1f}s · {trigger}_\n\n"
             "*Detalle de control:*\n"
-            f"> Fuentes: `{sources_ok}/{sources_total}` · Figuras QA: `{fig_qa}`\n"
-            f"> Filas: `{total_rows:,}` (`{sign}{delta_rows:,}` vs base) · Quiebre: `{quiebre_str}`\n"
+            f"> Fuentes: `{sources_ok}/{sources_total}` · Quiebre PELT: `{quiebre_str}`\n"
+            f"> Filas: `{total_rows:,}` (`{sign}{delta_rows:,}` vs base)\n"
             f"> Rango: `{year_range}` · Contrato: `{contract_kb:.1f} KB`"
         )
 
@@ -139,13 +135,13 @@ def format_whatsapp_summary(report: PipelineRunReport) -> str:
     error_detail = (
         f"Fuentes afectadas: {', '.join(failed_sources)}"
         if failed_sources
-        else "Fallo en validación visual o de esquema"
+        else "Fallo en validación de esquema"
     )
     return (
         "🔴 *[ARG-MACRO]* · Fallo en Ingesta\n"
         f"_{ts_utc} · {report.duration_sec:.1f}s · {trigger}_\n\n"
         "*Diagnóstico:*\n"
-        f"> Fuentes OK: `{sources_ok}/{sources_total}` · Figuras QA: `{fig_qa}`\n"
+        f"> Fuentes OK: `{sources_ok}/{sources_total}` · Quiebre PELT: `{quiebre_str}`\n"
         f"> Error: {error_detail}\n"
         "> Snapshot previo preservado sin cambios"
     )

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "argentina-macro-pipeline"
 version = "1.0.0"
-description = "Deterministic data engineering, quantitative macroeconomic analysis, and publication-grade visualization engine for Argentina (1961–Present), with encapsulated self-healing and visual QA agents."
+description = "Deterministic data engineering, quantitative macroeconomic analysis, and JSON contract engine for Argentina (1961–Present), with encapsulated self-healing and regime-shift evaluation agents."
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
@@ -14,7 +14,6 @@ authors = [
 dependencies = [
     "pandas>=2.1.0",
     "numpy>=1.26.0",
-    "matplotlib>=3.8.0",
     "statsmodels>=0.14.0",
     "ruptures>=1.1.9",
     "pydantic>=2.6.0",

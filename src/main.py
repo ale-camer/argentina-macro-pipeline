@@ -50,7 +50,6 @@ from src.validators.schema_and_golden import (
     load_golden_config,
     validate_series_dataframe,
 )
-from src.visualizers.charts import generate_all_charts
 
 
 def _get_previous_snapshot_info(
@@ -150,10 +149,9 @@ def build_website_json_contract(
     bundle: TransformedMacroBundle,
     telemetry_rows: List[SourceTelemetryRow],
     forecasts: Dict[str, Any],
-    charts_manifest: Dict[str, Dict[str, str]],
     out_path: Path = Path("outputs/macro_argentina_latest.json"),
 ) -> Path:
-    """Exports `outputs/macro_argentina_latest.json` (~26 KB) ready to be consumed by `personal_website`."""
+    """Exports `outputs/macro_argentina_latest.json` (~25 KB) ready to be rendered interactively by `personal_website`."""
     df_v1 = bundle.df_v1
     df_v2 = bundle.df_v2
     df_v3 = bundle.df_v3_geom
@@ -174,13 +172,6 @@ def build_website_json_contract(
             "correlation_jobs_emae_tc_pct": bundle.v2_metrics["corr_tc"],
             "demographic_gap_private_jobs_pp": bundle.v3_metrics["demographic_gap_pp"],
             "real_wage_index_2012_base100_latest": round(float(df_v5["sal_real_idx_2012"].iloc[-1]), 2),
-        },
-        "figures": {
-            k: {
-                "png": Path(v["png"]).name,
-                "svg": Path(v["svg"]).name,
-            }
-            for k, v in charts_manifest.items()
         },
         "series": {
             "visual_1_annual_macro": {
@@ -327,9 +318,7 @@ def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> Pipel
     break_report = evaluate_structural_breaks(bundle)
     forecasts = generate_macro_forecasts(bundle.df_v2, steps=6)
 
-    # Stage 3: Chart Generation + Agent 2 (`VisualQAAndRegimeAgent`)
-    charts_manifest = generate_all_charts(bundle, figures_dir="outputs/figures")
-    qa_report = visual_agent.inspect_visuals(charts_manifest)
+    # Stage 3: Agent 2 (`VisualQAAndRegimeAgent`) — PELT Regime Break Evaluation
     pr_proposal = visual_agent.draft_regime_shift_pr_if_needed(break_report, output_dir="outputs")
 
     # Stage 4: Output Contract + Always-On Monitoring & Alerts
@@ -337,12 +326,11 @@ def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> Pipel
         bundle=bundle,
         telemetry_rows=telemetry_rows,
         forecasts=forecasts,
-        charts_manifest=charts_manifest,
         out_path=Path("outputs/macro_argentina_latest.json"),
     )
 
     modes = {r.ingestion_mode for r in telemetry_rows}
-    if not all(r.golden_test_passed for r in telemetry_rows) or not qa_report.visual_qa_passed:
+    if not all(r.golden_test_passed for r in telemetry_rows):
         overall_status: PipelineStatus = "FAILED"
     elif "fallback_last_known_good" in modes:
         overall_status = "FALLBACK_USED"
@@ -356,7 +344,6 @@ def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> Pipel
     outputs_map = {
         "macro_contract_json": str(contract_path),
         "run_report_json": "outputs/run_report_latest.json",
-        "figures_dir": "outputs/figures",
     }
     if sync_lake:
         lake_info = sync_to_gcp_lake()
@@ -367,8 +354,6 @@ def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> Pipel
         duration_sec=round(time.perf_counter() - t0, 2),
         status=overall_status,
         sources_summary=telemetry_rows,
-        visual_qa_summary=f"{qa_report.figures_passed}/{qa_report.figures_checked} PASS",
-        visual_qa_report=qa_report,
         structural_breaks=break_report,
         regime_pr_proposal=pr_proposal,
         outputs_generated=outputs_map,

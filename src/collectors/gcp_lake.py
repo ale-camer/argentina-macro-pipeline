@@ -52,16 +52,6 @@ def sync_to_gcp_lake(
         ],
         check=True,
     )
-    subprocess.run(
-        [
-            "gcloud", "storage", "cp",
-            f"{outputs_dir}/figures/*",
-            f"{gold_uri}figures/",
-            f"--project={proj}",
-            "--quiet",
-        ],
-        check=True,
-    )
 
     for csv_path in sorted(Path(lkg_dir).glob("*.csv")):
         table_name = f"silver_{csv_path.stem}"

@@ -80,7 +80,7 @@ jobs:
         run: |
           python -m src.main
 
-      - name: Upload Generated Figures & JSON Contracts
+      - name: Upload Generated JSON Contracts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -88,8 +88,6 @@ jobs:
           path: |
             outputs/macro_argentina_latest.json
             outputs/run_report_latest.json
-            outputs/figures/*.png
-            outputs/figures/*.svg
             outputs/regime_shift_pr_proposal.md
 
       - name: Commit updated snapshots and outputs on main
@@ -97,8 +95,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/raw_cache/manifest.json data/last_known_good/ outputs/macro_argentina_latest.json outputs/run_report_latest.json outputs/figures/
+          git add data/raw_cache/manifest.json data/last_known_good/ outputs/macro_argentina_latest.json outputs/run_report_latest.json
           if ! git diff --cached --quiet; then
-            git commit -m "chore(data): automated monthly macro series and figures update"
+            git commit -m "chore(data): automated monthly macro series and JSON contract update"
             git push
           fi
