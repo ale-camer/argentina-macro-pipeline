@@ -24,6 +24,8 @@ jobs:
   run-macro-pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
     steps:
       - name: Checkout repository
@@ -36,13 +38,13 @@ jobs:
           cache: "pip"
 
       - name: Authenticate to Google Cloud
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY != ''
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK (gcloud & bq)
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+        if: env.GCP_SA_KEY != ''
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Install dependencies
@@ -57,7 +59,7 @@ jobs:
       - name: Execute Argentina Macro Pipeline & Sync Medallion Lake
         env:
           PREFER_NETWORK: ${{ github.event.inputs.prefer_network || 'true' }}
-          GCP_LAKE_SYNC: ${{ secrets.GCP_SA_KEY != '' && 'true' || 'false' }}
+          GCP_LAKE_SYNC: "true"
           GCP_PROJECT_ID: "argentina-macro-pipeline"
           GCS_LAKE_BUCKET: "gs://argentina-macro-lake-31037835126"
           BQ_DATASET: "macro_lake"
