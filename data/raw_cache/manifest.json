@@ -2,36 +2,36 @@
   "wb_inflacion.zip": {
     "sha256": "1fb759737d931822d3a8a2245a7e50c1e1e51d74d9f87f3a070b71bd896eec9e",
     "source_url": "https://api.worldbank.org/v2/en/indicator/NY.GDP.DEFL.KD.ZG?downloadformat=csv",
-    "updated_at": "2026-11-10T22:23:40.011883+00:00"
+    "updated_at": "2026-11-11T10:29:55.248495+00:00"
   },
   "wb_pbi_growth.zip": {
-    "sha256": "b917d2eae6ba0c69850cebba09608f3b64d5284fde828578a25901894550461d",
+    "sha256": "0004c3b7bb8464e491cd527cbc2b5e05828b611e11b600a8f36060e824bc4261",
     "source_url": "https://api.worldbank.org/v2/en/indicator/NY.GDP.MKTP.KD.ZG?downloadformat=csv",
-    "updated_at": "2026-11-10T22:23:40.188763+00:00"
+    "updated_at": "2026-11-11T10:29:55.444088+00:00"
   },
   "gasto_publico.xls": {
     "sha256": "e5d5655d76e3e4ebfc0a25932d868323d1257ffaec3234a67a4639db5227552a",
     "source_url": "https://www.argentina.gob.ar/sites/default/files/gasto_publico_consolidado_desde_1980_2.xls",
-    "updated_at": "2026-11-10T22:23:40.416104+00:00"
+    "updated_at": "2026-11-11T10:29:55.694090+00:00"
   },
   "sipa_trabajo_registrado.xlsx": {
     "sha256": "5c080dab89b4afb6616db82032cd15dd8d68684f18037b9f7e82f6fe2c5d8639",
     "source_url": "https://www.argentina.gob.ar/sites/default/files/trabajoregistrado_2607_estadisticas.xlsx",
-    "updated_at": "2026-11-10T22:23:39.790670+00:00"
+    "updated_at": "2026-11-11T10:29:54.981103+00:00"
   },
   "indec_indice_salarios.csv": {
     "sha256": "9c0f2aa39b571d7d7a6c8c54daf11e0f46b8d9a1679a714f4feb0e533cafb4b9",
     "source_url": "https://www.indec.gob.ar/ftp/cuadros/sociedad/indice_salarios.csv",
-    "updated_at": "2026-11-10T22:23:43.340892+00:00"
+    "updated_at": "2026-11-11T10:29:58.311560+00:00"
   },
   "indec_salarios_hist_2012.xls": {
     "sha256": "edbacc4257884e9c74c28e25c7f3b615b7fe215c73281cbf1e0dd57831e2e7bc",
     "source_url": "https://www.indec.gob.ar/ftp/cuadros/sociedad/serie_is_2012.xls",
-    "updated_at": "2026-11-10T22:23:47.480620+00:00"
+    "updated_at": "2026-11-11T10:30:00.592856+00:00"
   },
   "indec_emae.xls": {
     "sha256": "b5efa8d63ab83a6db1b0ad9dc2198ada30669f8443e851803d4767131329ad38",
     "source_url": "https://www.indec.gob.ar/ftp/cuadros/economia/sh_emae_mensual_base2004.xls",
-    "updated_at": "2026-11-10T22:23:50.811171+00:00"
+    "updated_at": "2026-11-11T10:30:03.535057+00:00"
   }
 }

@@ -1,6 +1,6 @@
 {
-  "run_timestamp_utc": "2026-11-11T10:15:48.007134+00:00",
-  "duration_sec": 16.32,
+  "run_timestamp_utc": "2026-11-11T10:31:11.040009+00:00",
+  "duration_sec": 76.51,
   "status": "OK_DETERMINISTIC",
   "sources_summary": [
     {
@@ -98,7 +98,7 @@
         "exists": true,
         "width_px": 1877,
         "height_px": 1355,
-        "file_size_bytes": 297996,
+        "file_size_bytes": 298156,
         "passed": true,
         "issues": []
       },
@@ -108,7 +108,7 @@
         "exists": true,
         "width_px": 1876,
         "height_px": 1053,
-        "file_size_bytes": 385959,
+        "file_size_bytes": 386795,
         "passed": true,
         "issues": []
       },
@@ -118,7 +118,7 @@
         "exists": true,
         "width_px": 1802,
         "height_px": 1002,
-        "file_size_bytes": 282743,
+        "file_size_bytes": 283044,
         "passed": true,
         "issues": []
       },
@@ -128,7 +128,7 @@
         "exists": true,
         "width_px": 2026,
         "height_px": 823,
-        "file_size_bytes": 135470,
+        "file_size_bytes": 135677,
         "passed": true,
         "issues": []
       },
@@ -138,7 +138,7 @@
         "exists": true,
         "width_px": 1791,
         "height_px": 1324,
-        "file_size_bytes": 247831,
+        "file_size_bytes": 248080,
         "passed": true,
         "issues": []
       }
@@ -177,9 +177,16 @@
   "outputs_generated": {
     "macro_contract_json": "outputs/macro_argentina_latest.json",
     "run_report_json": "outputs/run_report_latest.json",
-    "figures_dir": "outputs/figures"
+    "figures_dir": "outputs/figures",
+    "gcp_project": "argentina-macro-pipeline",
+    "bronze_gcs_uri": "gs://argentina-macro-lake-31037835126/bronze/2026-11/",
+    "silver_gcs_uri": "gs://argentina-macro-lake-31037835126/silver/latest/",
+    "gold_gcs_uri": "gs://argentina-macro-lake-31037835126/gold/latest/",
+    "bigquery_dataset": "argentina-macro-pipeline:macro_lake"
   },
   "notifications_sent": [
-    "local_json_report"
+    "local_json_report",
+    "github_step_summary",
+    "whatsapp"
   ]
 }
