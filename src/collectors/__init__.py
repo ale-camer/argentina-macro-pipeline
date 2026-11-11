@@ -125,7 +125,17 @@ def resolve_raw_file(
     cached_path = cache_dir / local_filename
     bootstrap_path = Path(bootstrap_raw_dir) / local_filename
 
-    if prefer_network:
+    if not cached_path.exists() and bootstrap_path.exists():
+        shutil.copy2(bootstrap_path, cached_path)
+        sha = compute_sha256(cached_path)
+        update_raw_cache_manifest(
+            cache_dir,
+            local_filename,
+            sha,
+            source_cfg.get("direct_url", "bootstrap/raw_data"),
+        )
+
+    if prefer_network or not cached_path.exists():
         candidate_urls: list[str] = []
         landing_url = source_cfg.get("landing_page_url")
         regex_str = source_cfg.get("discovery_regex")
@@ -153,16 +163,6 @@ def resolve_raw_file(
                         return cached_path
             except Exception:
                 continue
-
-    if not cached_path.exists() and bootstrap_path.exists():
-        shutil.copy2(bootstrap_path, cached_path)
-        sha = compute_sha256(cached_path)
-        update_raw_cache_manifest(
-            cache_dir,
-            local_filename,
-            sha,
-            source_cfg.get("direct_url", "bootstrap/raw_data"),
-        )
 
     if cached_path.exists():
         return cached_path

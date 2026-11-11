@@ -47,6 +47,12 @@ jobs:
         if: env.GCP_SA_KEY != ''
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Hydrate Bronze raw cache from GCS Medallion Lake
+        if: env.GCP_SA_KEY != ''
+        run: |
+          mkdir -p data/raw_cache
+          gcloud storage cp "gs://argentina-macro-lake-31037835126/bronze/latest/*" data/raw_cache/ || true
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
