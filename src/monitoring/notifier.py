@@ -232,7 +232,7 @@ def send_telegram_alert(markdown_text: str) -> bool:
 
 def send_email_alert(subject: str, body: str) -> bool:
     smtp_host = os.environ.get("SMTP_HOST")
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
+    smtp_port = int(os.environ.get("SMTP_PORT") or "587")
     smtp_user = os.environ.get("SMTP_USER")
     smtp_pass = os.environ.get("SMTP_PASS")
     email_to = os.environ.get("ALERT_EMAIL_TO")
