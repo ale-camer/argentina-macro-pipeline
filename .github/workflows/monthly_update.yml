@@ -35,6 +35,16 @@ jobs:
           python-version: "3.12"
           cache: "pip"
 
+      - name: Authenticate to Google Cloud
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK (gcloud & bq)
+        if: ${{ secrets.GCP_SA_KEY != '' }}
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -44,9 +54,13 @@ jobs:
         run: |
           pytest -v
 
-      - name: Execute Argentina Macro Pipeline
+      - name: Execute Argentina Macro Pipeline & Sync Medallion Lake
         env:
           PREFER_NETWORK: ${{ github.event.inputs.prefer_network || 'true' }}
+          GCP_LAKE_SYNC: ${{ secrets.GCP_SA_KEY != '' && 'true' || 'false' }}
+          GCP_PROJECT_ID: "argentina-macro-pipeline"
+          GCS_LAKE_BUCKET: "gs://argentina-macro-lake-31037835126"
+          BQ_DATASET: "macro_lake"
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
