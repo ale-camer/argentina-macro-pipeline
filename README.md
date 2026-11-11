@@ -26,7 +26,7 @@ The pipeline runs automatically on the **25th of each month at 09:00 UTC** via G
    - Generates all 5 figures in high resolution (`PNG` + `SVG`) under `outputs/figures/` using dynamically reserved upper header bands and external legends (`bbox_to_anchor`).
    - **Agent 2 Boundary (`VisualQAAndRegimeAgent`):** Audits all 5 generated charts (`5/5 PASS`) and, **only** if `structural_breaks.py` flags `regime_shift_detected = True`, drafts a human-review Pull Request proposal in `outputs/regime_shift_pr_proposal.md`.
 4. **Stage 4 — Web Contract & Always-On Monitoring (`outputs/`, `src/monitoring/notifier.py`):**
-   - Exports `outputs/macro_argentina_latest.json` (`~26 KB`) and `outputs/run_report_latest.json`, dispatching alerts via GitHub Step Summary, Telegram Bot API, and/or SMTP Email.
+   - Exports `outputs/macro_argentina_latest.json` (`~26 KB`) and `outputs/run_report_latest.json`, dispatching alerts via WhatsApp (TextMeBot / CallMeBot), GitHub Step Summary, Telegram Bot API, and/or SMTP Email.
 
 ---
 
@@ -52,7 +52,7 @@ argentina-macro-pipeline/
 │   ├── models/                          # 100% Deterministic: PELT structural breaks + SARIMAX forecaster
 │   ├── visualizers/                     # 100% Deterministic: 5 zero-overlap figures (PNG + SVG)
 │   ├── agents/                          # Strictly encapsulated agentic layer (with deterministic fallback)
-│   └── monitoring/                      # Structured telemetry and Always-On alerts (Telegram / SMTP / GitHub)
+│   └── monitoring/                      # Structured telemetry and Always-On alerts (WhatsApp / Telegram / SMTP / GitHub)
 ├── outputs/
 │   ├── macro_argentina_latest.json      # Compact JSON contract (~26 KB) ready for personal_website
 │   ├── run_report_latest.json           # Latest execution telemetry (per-source status, Golden Tests, QA)

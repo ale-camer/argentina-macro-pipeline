@@ -1,13 +1,17 @@
 """Always-On monitoring and alerting system (`notifier.py`):
-Generates `outputs/run_report_latest.json` and dispatches structured notifications (Telegram / SMTP Email / GitHub Actions Summary)
+Generates `outputs/run_report_latest.json` and dispatches structured notifications (WhatsApp via TextMeBot/CallMeBot, Telegram, SMTP Email, GitHub Actions Summary)
 on every pipeline execution (success or failure).
 """
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
 import json
+import logging
 import os
 import smtplib
+import urllib.parse
+import urllib.request
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union
@@ -17,6 +21,8 @@ from pydantic import BaseModel, Field
 
 from src.agents.visual_and_regime_agent import RegimePRProposal, VisualQAReport
 from src.models.structural_breaks import StructuralBreakReport
+
+logger = logging.getLogger(__name__)
 
 
 PipelineStatus = Literal[
@@ -41,6 +47,7 @@ class SourceTelemetryRow(BaseModel):
 
 class PipelineRunReport(BaseModel):
     run_timestamp_utc: str
+    duration_sec: float = 0.0
     status: PipelineStatus
     sources_summary: List[SourceTelemetryRow] = Field(default_factory=list)
     visual_qa_summary: str
@@ -51,11 +58,20 @@ class PipelineRunReport(BaseModel):
     notifications_sent: List[str] = Field(default_factory=list)
 
 
+def _detect_trigger_label() -> str:
+    ev = os.getenv("GITHUB_EVENT_NAME", "").strip().lower()
+    if ev == "schedule":
+        return "Cron"
+    if ev:
+        return "Manual (GHA)"
+    return "Manual"
+
+
 def format_markdown_summary(report: PipelineRunReport) -> str:
     """Formats a Markdown summary table covering all sources, Golden Tests, and Visual QA."""
     lines = [
         f"## Argentina Macro Pipeline — Run Report (`{report.status}`)",
-        f"- **Timestamp (UTC):** `{report.run_timestamp_utc}`",
+        f"- **Timestamp (UTC):** `{report.run_timestamp_utc}` (`{report.duration_sec:.1f}s`)",
         f"- **Visual QA:** `{report.visual_qa_summary}` (`{report.visual_qa_report.mode_used}`)",
         f"- **Regime Shift Detected:** `{report.structural_breaks.regime_shift_detected}`",
         "",
@@ -73,46 +89,130 @@ def format_markdown_summary(report: PipelineRunReport) -> str:
 
 
 def format_whatsapp_summary(report: PipelineRunReport) -> str:
-    """Formats a compact, single-thread WhatsApp message prefixed with *[ARG-MACRO]* for CallMeBot."""
-    status_emoji = {
-        "OK_DETERMINISTIC": "✅",
-        "HEALED_BY_AGENT": "🛠️",
-        "REGIME_SHIFT_PR_OPENED": "🚨",
-        "FALLBACK_USED": "⚠️",
-        "FAILED": "❌",
-    }.get(report.status, "ℹ️")
-
-    passed_gt = sum(1 for r in report.sources_summary if r.golden_test_passed)
-    total_gt = len(report.sources_summary)
-    new_obs_total = sum(r.new_observations_added for r in report.sources_summary)
-
-    lines = [
-        f"🇦🇷 *[ARG-MACRO]* {status_emoji} *{report.status}*",
-        f"📅 {report.run_timestamp_utc[:10]} | Golden: {passed_gt}/{total_gt} PASS | QA: {report.visual_qa_summary} ({report.visual_qa_report.mode_used})",
-        f"📈 Nuevas obs: +{new_obs_total} | Quiebre régimen: {'SÍ' if report.structural_breaks.regime_shift_detected else 'NO'}",
-    ]
-    for r in report.sources_summary:
-        badge = "✓" if r.golden_test_passed else "✗"
-        delta = f" (+{r.new_observations_added})" if r.new_observations_added > 0 else ""
-        lines.append(f"• {badge} `{r.source_id}`: {r.current_last_period}{delta}")
-    return "\n".join(lines)
-
-
-def send_whatsapp_callmebot_alert(text: str) -> bool:
-    """Sends a WhatsApp message to the user's personal phone via CallMeBot API."""
-    phone = os.environ.get("WHATSAPP_PHONE")
-    apikey = os.environ.get("WHATSAPP_APIKEY")
-    if not phone or not apikey:
-        return False
+    """Formats a 2-tier (Executive Header + Diagnostic Detail) WhatsApp alert with *[ARG-MACRO]*."""
     try:
-        url = "https://api.callmebot.com/whatsapp.php"
-        params = {"phone": phone, "text": text, "apikey": apikey}
-        with httpx.Client(timeout=15.0) as client:
-            resp = client.get(url, params=params)
-            resp.raise_for_status()
-        return True
+        dt = datetime.fromisoformat(report.run_timestamp_utc.replace("Z", "+00:00"))
+        ts_utc = dt.astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     except Exception:
+        ts_utc = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    trigger = _detect_trigger_label()
+    sources_ok = sum(
+        1
+        for r in report.sources_summary
+        if r.golden_test_passed and r.ingestion_mode in ("deterministic", "healed_by_agent")
+    )
+    sources_total = len(report.sources_summary)
+    total_rows = sum(r.row_count for r in report.sources_summary)
+    delta_rows = sum(r.new_observations_added for r in report.sources_summary)
+    fig_qa = f"{report.visual_qa_report.figures_passed}/{report.visual_qa_report.figures_checked}"
+
+    years = [
+        int(r.current_last_period[:4])
+        for r in report.sources_summary
+        if r.current_last_period and len(r.current_last_period) >= 4 and r.current_last_period[:4].isdigit()
+    ]
+    max_year = max(years) if years else 2026
+    year_range = f"1961–{max_year}"
+
+    contract_path = Path(report.outputs_generated.get("macro_contract_json", "outputs/macro_argentina_latest.json"))
+    contract_kb = (contract_path.stat().st_size / 1024.0) if contract_path.exists() else 26.0
+
+    success = report.status in ("OK_DETERMINISTIC", "HEALED_BY_AGENT", "REGIME_SHIFT_PR_OPENED")
+    if success:
+        sign = "+" if delta_rows >= 0 else ""
+        quiebre_str = "SÍ" if report.structural_breaks.regime_shift_detected else "NO"
+        return (
+            "🟢 *[ARG-MACRO]* · Ingesta Mensual OK\n"
+            f"_{ts_utc} · {report.duration_sec:.1f}s · {trigger}_\n\n"
+            "*Detalle de control:*\n"
+            f"> Fuentes: `{sources_ok}/{sources_total}` · Figuras QA: `{fig_qa}`\n"
+            f"> Filas: `{total_rows:,}` (`{sign}{delta_rows:,}` vs base) · Quiebre: `{quiebre_str}`\n"
+            f"> Rango: `{year_range}` · Contrato: `{contract_kb:.1f} KB`"
+        )
+
+    failed_sources = [
+        f"{r.source_id} ({r.ingestion_mode})"
+        for r in report.sources_summary
+        if not r.golden_test_passed or r.ingestion_mode not in ("deterministic", "healed_by_agent")
+    ]
+    error_detail = (
+        f"Fuentes afectadas: {', '.join(failed_sources)}"
+        if failed_sources
+        else "Fallo en validación visual o de esquema"
+    )
+    return (
+        "🔴 *[ARG-MACRO]* · Fallo en Ingesta\n"
+        f"_{ts_utc} · {report.duration_sec:.1f}s · {trigger}_\n\n"
+        "*Diagnóstico:*\n"
+        f"> Fuentes OK: `{sources_ok}/{sources_total}` · Figuras QA: `{fig_qa}`\n"
+        f"> Error: {error_detail}\n"
+        "> Snapshot previo preservado sin cambios"
+    )
+
+
+def send_whatsapp_notification(message: str) -> bool:
+    """
+    Send `message` via TextMeBot or CallMeBot using the standardized credentials:
+      - WHATSAPP_PHONE: WhatsApp Group JID (`120363...@g.us`) OR phone number (`+4177...`)
+      - WHATSAPP_APIKEY: TextMeBot alphanumeric key or CallMeBot numeric key
+    Returns True if sent, False if skipped or failed.
+    """
+    recipient = os.getenv("WHATSAPP_PHONE", "").strip()
+    if not recipient:
+        logger.info("WHATSAPP_PHONE not configured; skipping WhatsApp dispatch.")
         return False
+
+    api_key = (
+        os.getenv("WHATSAPP_APIKEY", "").strip()
+        or os.getenv("WHATSAPP_CALLMEBOT_APIKEY", "").strip()
+    )
+    if not api_key:
+        logger.warning("WHATSAPP_PHONE is set, but WHATSAPP_APIKEY was not found.")
+        return False
+
+    encoded_msg = urllib.parse.quote(message)
+
+    if not api_key.isdigit():
+        if "@g.us" in recipient:
+            formatted_recipient = recipient
+        else:
+            clean_phone = recipient.lstrip("+").replace(" ", "").replace("-", "")
+            formatted_recipient = urllib.parse.quote(f"+{clean_phone}")
+        url = (
+            f"https://api.textmebot.com/send.php?"
+            f"recipient={formatted_recipient}&apikey={urllib.parse.quote(api_key)}"
+            f"&text={encoded_msg}&json=yes"
+        )
+        provider_name = "TextMeBot"
+    else:
+        clean_phone = recipient.lstrip("+").replace(" ", "").replace("-", "")
+        url = (
+            f"https://api.callmebot.com/whatsapp.php?"
+            f"phone={clean_phone}&text={encoded_msg}&apikey={api_key}"
+        )
+        provider_name = "CallMeBot"
+
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            body = resp.read().decode("utf-8", errors="ignore").strip()
+            if provider_name == "TextMeBot":
+                try:
+                    ok = json.loads(body).get("status") == "success"
+                except Exception:
+                    ok = "Success" in body or "success" in body
+            else:
+                ok = 200 <= resp.status < 300
+            logger.info("WhatsApp notification via %s: HTTP %s (ok=%s)", provider_name, resp.status, ok)
+            return ok
+    except Exception as exc:
+        logger.error("Failed to send WhatsApp via %s: %s", provider_name, exc)
+        return False
+
+
+# Backward-compatible alias
+send_whatsapp_callmebot_alert = send_whatsapp_notification
 
 
 def send_telegram_alert(markdown_text: str) -> bool:
@@ -175,8 +275,8 @@ def publish_run_report(
 
     if write_github_step_summary(md_summary):
         channels.append("github_step_summary")
-    if send_whatsapp_callmebot_alert(format_whatsapp_summary(report)):
-        channels.append("whatsapp_callmebot")
+    if send_whatsapp_notification(format_whatsapp_summary(report)):
+        channels.append("whatsapp")
     if send_telegram_alert(md_summary):
         channels.append("telegram")
     if send_email_alert(f"[Argentina Macro Pipeline] Status: {report.status}", md_summary):

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
@@ -236,6 +237,7 @@ def build_website_json_contract(
 
 def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> PipelineRunReport:
     """Executes all 4 pipeline stages end-to-end and returns the structured telemetry report."""
+    t0 = time.perf_counter()
     sources_cfg = load_sources_config()
     golden_cfg = load_golden_config()
     healer = SelfHealingIngestionAgent(golden_config=golden_cfg)
@@ -362,6 +364,7 @@ def run_pipeline(prefer_network: bool = False, sync_lake: bool = False) -> Pipel
 
     report = PipelineRunReport(
         run_timestamp_utc=datetime.now(timezone.utc).isoformat(),
+        duration_sec=round(time.perf_counter() - t0, 2),
         status=overall_status,
         sources_summary=telemetry_rows,
         visual_qa_summary=f"{qa_report.figures_passed}/{qa_report.figures_checked} PASS",
